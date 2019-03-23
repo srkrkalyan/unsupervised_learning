@@ -68,47 +68,28 @@ for each in metrics_report.keys():
 
 print(metrics_report)
 
-#visualizing given data set
-plt.scatter(X[kmeans.labels_ ==0,0], X[kmeans.labels_ == 0,1], s=40, c='red', label = 'Cluster 1')
-plt.scatter(X[kmeans.labels_ ==1,0], X[kmeans.labels_ == 1,1], s=40, c='blue', label = 'Cluster 2')
-plt.scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1], s=300, c='yellow',label='centroids')
-plt.title('Clustering of Breast Cancer Dataset with no classification labels')
+print(gmm_total_data_scaled)
+
+
+# visualizing EM clustering - no labels
+plt.scatter(total_data_scaled[gmm_total_data_scaled ==1,0], total_data_scaled[gmm_total_data_scaled == 1,1], s=40, c='red', label = 'Cluster 1')
+plt.scatter(total_data_scaled[gmm_total_data_scaled ==0,0], total_data_scaled[gmm_total_data_scaled == 0,1], s=40, c='blue', label = 'Cluster 2')
+plt.title('EM Clustering of Breast Cancer Dataset - With Classification Labels')
+plt.xlabel('mean_radius')
+plt.ylabel('mean_texture')
+plt.legend()
+plt.show()
+
+# visualizing EM clustering - no labels
+plt.scatter(X_scaled[gmm_X_scaled ==1,0], X_scaled[gmm_X_scaled == 1,1], s=40, c='red', label = 'Cluster 1')
+plt.scatter(X_scaled[gmm_X_scaled ==0,0], X_scaled[gmm_X_scaled == 0,1], s=40, c='blue', label = 'Cluster 2')
+plt.title('EM Clustering of Breast Cancer Dataset - With Out Classification Labels')
 plt.xlabel('mean_radius')
 plt.ylabel('mean_texture')
 plt.legend()
 plt.show()
 
 
-# Clustering of total dataset including classification label
-kmeans_total = KMeans(n_clusters=2, random_state = 0, n_init=20).fit(total_data)
-print(kmeans_total.labels_)
-for index in range(0,len(kmeans_total.labels_)):
-    kmeans_total.labels_[index] = kmeans_total.labels_[index]+1
-
-# Calculate accuracy score
-accuracy_totaldata = accuracy_score(y,kmeans_total.labels_)
-print(accuracy_totaldata)
-metrics.adjusted_rand_score(y,kmeans_total.labels_)
-
-#visualizing clustering of given dataset
-plt.scatter(total_data[kmeans_total.labels_ ==0,0], total_data[kmeans_total.labels_ == 0,1], s=40, c='red', label = 'Cluster 1')
-plt.scatter(total_data[kmeans_total.labels_ ==1,0], total_data[kmeans_total.labels_ == 1,1], s=40, c='blue', label = 'Cluster 2')
-plt.scatter(kmeans_total.cluster_centers_[:,0], kmeans_total.cluster_centers_[:,1], s=300, c='yellow',label='centroids')
-plt.title('Clustering of Breast Cancer Dataset - With Classification Labels')
-plt.xlabel('mean_radius')
-plt.ylabel('mean_texture')
-plt.legend()
-plt.show()
-
-
-#Visualizing given dataset
-plt.scatter(X[y ==0,0], X[y == 0,1], s=40, c='blue', label = 'Diagnosis: 0')
-plt.scatter(X[y ==1,0], X[y == 1,1], s=40, c='red', label = 'Diagnosis: 1')
-plt.title('Classification of Breast Cancer dataset as it is')
-plt.xlabel('mean_radius')
-plt.ylabel('mean_texture')
-plt.legend()
-plt.show()
 
 
 
