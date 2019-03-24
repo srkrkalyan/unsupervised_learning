@@ -6,7 +6,6 @@ from sklearn.mixture import GaussianMixture
 from sklearn.random_projection import GaussianRandomProjection
 import matplotlib.pyplot as plt
 from sklearn import metrics
-from sklearn.metrics import accuracy_score
 from sklearn.cluster import KMeans
 import numpy as np
 
@@ -28,38 +27,57 @@ total_data_scaled = sc.fit_transform(total_data)
 
 #total_data = np.c_[X,y]
 
+X_scaled_transformed = GaussianRandomProjection(n_components=3, random_state=2).fit_transform(X_scaled)
+X_scaled_transformed_y = np.c_[X_scaled_transformed,y]
 
-'''
-
-for components in range(1,X_scaled.shape[-1]+1):
-    dataset= X_scaled
-    pca = PCA(n_components = components)
-    dataset = pca.fit_transform(dataset)
-    #temp_y = y
-    #align_clusters_labels(temp_y)
-    kmeans = KMeans(n_clusters=2, random_state = 0, n_init=20).fit(dataset)
-    print(dataset.shape)
-    print(1-accuracy_score(y,kmeans.labels_))
-    dataset = np.c_[dataset,y]
-    kmeans = KMeans(n_clusters=2, random_state = 0, n_init=20).fit(dataset)
-    #print(dataset.shape)
-    print(1-accuracy_score(y,kmeans.labels_))
- '''   
-    
-
-X_transformed = GaussianRandomProjection(n_components=3).fit_transform(X_scaled)
-X_transformed_y = np.c_[X_transformed,y]
-
-'''
-kmeans = KMeans(n_clusters=2, random_state = 0, n_init=20).fit(X_transformed)
+kmeans = KMeans(n_clusters=2, random_state = 0, n_init=20).fit(X_scaled_transformed)
 align_clusters_labels(kmeans.labels_)
-#print(dataset.shape)
-print(accuracy_score(y,kmeans.labels_))
-'''
+gmm = GaussianMixture(n_components=2).fit_predict(X_scaled_transformed)
+align_clusters_labels(gmm)
+
+
+metrics_report = {'kmeans':{},
+                  'gmm':{}
+                  }
+
+labels = {'kmeans':kmeans.labels_,
+          'gmm':gmm
+         }
+
+for each in metrics_report.keys():
+    metrics_report[each]['ARI'] = round(metrics.adjusted_rand_score(y,labels[each]),2)
+    metrics_report[each]['AMI'] = round(metrics.adjusted_mutual_info_score(y,labels[each]),2)
+    metrics_report[each]['homogeneity'] = round(metrics.homogeneity_score(y,labels[each]),2)
+    metrics_report[each]['completeness'] = round(metrics.completeness_score(y,labels[each]),2)
+    metrics_report[each]['v_measure'] = round(metrics.v_measure_score(y,labels[each]),2)
+    metrics_report[each]['silhouette'] = round(metrics.silhouette_score(X,labels[each]),2)
+    metrics_report[each]['accuracy'] = round(metrics.accuracy_score(y,labels[each])*100,2)
+
+print(metrics_report)
+
+#visualizing - k-means clustering of RP transformed dataset
+plt.scatter(X_scaled_transformed[kmeans.labels_ ==1,0], X_scaled_transformed[kmeans.labels_ == 1,1], s=40, c='red', label = 'Cluster 1')
+plt.scatter(X_scaled_transformed[kmeans.labels_ ==0,0], X_scaled_transformed[kmeans.labels_ == 0,1], s=40, c='blue', label = 'Cluster 2')
+plt.scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1], s=300, c='yellow',label='centroids')
+plt.title('k-means clustering on RP transformed dataset - Breast Cancer Dataset')
+plt.xlabel('RP 0')
+plt.ylabel('RP 1')
+plt.legend()
+plt.show()
+
+#visualizing - EM clustering of RP transformed dataset
+plt.scatter(X_scaled_transformed[gmm ==1,0], X_scaled_transformed[gmm == 1,1], s=40, c='red', label = 'Cluster 1')
+plt.scatter(X_scaled_transformed[gmm ==0,0], X_scaled_transformed[gmm == 0,1], s=40, c='blue', label = 'Cluster 2')
+plt.title('EM clustering on RP transformed dataset - Breast Cancer Dataset')
+plt.xlabel('RP 0')
+plt.ylabel('RP 1')
+plt.legend()
+plt.show()
+
 
 # splitting X & y into training and testing sets
 from sklearn.model_selection import train_test_split
-X_transformed_train, X_transformed_test, y_train, y_test = train_test_split(X_transformed,y,test_size=0.3,random_state=1)
+X_transformed_train, X_transformed_test, y_train, y_test = train_test_split(X_scaled_transformed,y,test_size=0.3,random_state=1)
 
 #Importing keras libraries and packages
 #import keras
@@ -98,56 +116,21 @@ print(classification_report(y_test, y_pred))
 # comparing predictions and targets to compute accuracy
 print("Artificial Neural Network - accuracy - Breast Cancer Prediction: ", round(metrics.accuracy_score(y_test,y_pred),6))
 
-
-'''
-# Clustering of X vector 
-kmeans = KMeans(n_clusters=2, random_state = 0, n_init=20).fit(X)
-
-#calculate accuracy score
-from sklearn.metrics import accuracy_score
-accuracy = accuracy_score(y,kmeans.labels_)
-print(accuracy)
-print(kmeans.get_params)
-#print(kmeans.labels_)
-#print(kmeans.cluster_centers_)
-
-#visualizing given data set
-plt.scatter(X[kmeans.labels_ ==0,0], X[kmeans.labels_ == 0,1], s=20, c='red', label = 'Cluster 1')
-plt.scatter(X[kmeans.labels_ ==1,0], X[kmeans.labels_ == 1,1], s=20, c='blue', label = 'Cluster 2')
-plt.scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1], s=300, c='yellow',label='centroids')
-plt.title('Clustering of Travel Insurance Dataset with no classification labels')
-plt.xlabel('PCA 0')
-plt.ylabel('PCA 1')
-plt.legend()
+# summarize history for accuracy
+plt.plot(history.history['acc'])
+plt.plot(history.history['val_acc'])
+plt.title('ANN Accuracy - Breast Cancer RP Data Set')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
 plt.show()
-
-
-# Clustering of total dataset including classification label
-kmeans_total = KMeans(n_clusters=2, random_state = 0, n_init=20).fit(total_data)
-
-# Calculate accuracy score
-accuracy_totaldata = accuracy_score(y,kmeans_total.labels_)
-print(1-accuracy_totaldata)
-
-#visualizing clustering of given dataset
-plt.scatter(total_data[kmeans_total.labels_ ==0,0], total_data[kmeans_total.labels_ == 0,1], s=40, c='red', label = 'Cluster 1')
-plt.scatter(total_data[kmeans_total.labels_ ==1,0], total_data[kmeans_total.labels_ == 1,1], s=40, c='blue', label = 'Cluster 2')
-plt.scatter(kmeans_total.cluster_centers_[:,0], kmeans_total.cluster_centers_[:,1], s=300, c='yellow',label='centroids')
-plt.title('Clustering of Breast Cancer Dataset - With Classification Labels')
-plt.xlabel('mean_radius')
-plt.ylabel('mean_texture')
-plt.legend()
+# summarize history for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('ANN Loss - Breast Cancer RP Data Set')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
 plt.show()
-
-
-#Visualizing given dataset
-plt.scatter(X[y ==0,0], X[y == 0,1], s=20, c='red', label = 'Diagnosis: 0')
-plt.scatter(X[y ==1,0], X[y == 1,1], s=20, c='blue', label = 'Diagnosis: 1')
-plt.title('Classification of Travel Insurance dataset as it is')
-plt.xlabel('PCA 0')
-plt.ylabel('PCA 1')
-plt.legend()
-plt.show()
-'''
 
 
